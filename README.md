@@ -6,7 +6,7 @@ fully-automated mode.
 ## Usage:
 
 1. Install this Chrome extension
-2. Go to https://iss-sim.spacex.com/
+2. Go to [https://spacex-docking-sim.netlify.app/](https://spacex-docking-sim.netlify.app/)
 3. Click play button
 4. Use hotkeys to enable or disable assistants
 
@@ -15,7 +15,7 @@ Hotkeys:
 
 Toggle all assistants:   "f"
 Toggle Roll Assistant:   "r"
-Toggle Yaw Assistant:    "Shift+Y"
+Toggle Yaw Assistant:    "Y" (Shift + Y)
 Toggle Pitch Assistant:  "p"
 Toggle X-axis Assistant: "x"
 Toggle Y-axis Assistant: "y"
@@ -40,12 +40,7 @@ so the only possible way to install it is manual.
 6. Click Open.
 7. If you see a UFO icon in extension bar (top right) that means extension is
    loaded successfully.
-
-
-P.S. Once it is published in Webstore, installation will be much simpler.
+. Once it is published in Webstore, installation will be much simpler.
 
 ## In addition
-I used simple PID Controller algorithm to implement this autopilot.
-
-If you wish to play around with coefficients - you may paste content of 
-autopilot.js into browser's console. 
+Original version by viocost
