@@ -1,4 +1,4 @@
-# Autopilot && Flight assistant for SpaceX ISS Docking simulator https://iss-sim.spacex.com/
+# Autopilot && Flight assistant for SpaceX ISS Docking simulator https://spacex-docking-sim.netlify.app/
 
 This extension allows you to dock to the ISS in semi-automated or
 fully-automated mode.
