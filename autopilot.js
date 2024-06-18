@@ -44,7 +44,7 @@ let inputs = {
 
 function getYaw() {
     let raw = document.getElementById("yaw").children[0].innerText
-    return parseFloat(raw.substring(0, raw.length - 1))
+    return -parseFloat(raw.substring(0, raw.length - 1))
 }
 
 function getPitch() {
@@ -55,7 +55,7 @@ function getPitch() {
 function getRoll() {
 
     let raw = document.getElementById("roll").children[0].innerText
-    return parseFloat(raw.substring(0, raw.length - 1))
+    return -parseFloat(raw.substring(0, raw.length - 1))
 }
 
 
@@ -80,7 +80,7 @@ function getZ(){
 
 class Assistant {
     constructor(param = {}) {
-        let { pc = 5, ic = 0, dc = 0, tv = 0, functionIncrease = null, functionDecrease = null, interval = 100 } = param;
+        let { pc = 10, ic = 0, dc = 0, tv = 0, functionIncrease = null, functionDecrease = null, interval = 100 } = param;
         this.enabled = false;
         this.pc = pc; //Proportional coefficient
         this.ic = ic; //Integral coefficient
@@ -122,7 +122,7 @@ class Assistant {
         this.lastError = error
         this.lastTime = now
 
-        console.log(`pc: ${this.pc}, ic ${this.ic}, dc: ${this.dc}, error: ${error}, dErr: ${dErr}, deltaTime: ${deltaTime}`);
+        //console.log(`pc: ${this.pc}, ic ${this.ic}, dc: ${this.dc}, error: ${error}, dErr: ${dErr}, deltaTime: ${deltaTime}`);
         return this.pc * error + this.ic * this.errorSum + this.dc * dErr;
     }
 
@@ -136,10 +136,14 @@ class Assistant {
         this.lastTime = new Date()
 
         let runOnce = function(){
+            if (document.getElementById("timer").innerText==="") {
+                ap.disable()
+            }
+
             let input = self.getInput()
-            console.log(`Input: ${input}`);
+            //console.log(`Input: ${input}`);
             let output = self.compute(input)
-            console.log(`Output: ${output}`);
+            //console.log(`Output: ${output}`);
             for (let i=0; i<self.normalizeOutput(Math.floor(Math.abs(output))); ++i ){
                 output < 0 ? self.functionIncrease() : self.functionDecrease();
             }
@@ -155,7 +159,11 @@ class Assistant {
     }
 
     toggle(){
-        this.enabled ? this.stop() : this.run();
+        if (this.enabled) {
+            this.stop()
+        } else {
+            this.run()
+        }
     }
 
     normalizeOutput(val){
@@ -223,8 +231,8 @@ function prepareXAssistant(){
     res.setFunctionIncrease(window.translateForward);
     res.setFunctionDecrease(window.translateBackward);
     res.dc = 130
-    res.pc = 10
-    res.tv = 0.2
+    res.pc = 20
+    res.tv = 0.5
     return res;
 }
 function prepareYAssistant(){
@@ -233,7 +241,7 @@ function prepareYAssistant(){
     res.setFunctionIncrease(window.translateLeft);
     res.setFunctionDecrease(window.translateRight);
     res.dc = 100
-    res.tv = 0.1
+    res.tv = 0.0
     return res;
 }
 function prepareZAssistant(){
@@ -242,7 +250,7 @@ function prepareZAssistant(){
     res.setFunctionIncrease(window.translateDown);
     res.setFunctionDecrease(window.translateUp);
     res.dc = 100
-    res.tv = 0.1
+    res.tv = 0.0
     return res;
 }
 
@@ -258,13 +266,27 @@ class Autopilot{
     }
 
     checkApproach(){
-
-        if(getX() < 3){
-            console.log("Approach mode");
-            this.x.dc = 800
+        //console.log("Checking Approach...")
+        if (getX() < 3){
+            if (ap.x.dc != 1600) {console.log("Phase II - Approach")}
+            ap.x.dc = 1600
+            ap.y.dc = 800
+            ap.z.dc = 800
+            if (Math.abs(getY()) < 0.2 && Math.abs(getZ()) < 0.2 && Math.abs(getPitch()) < 0.2 && Math.abs(getRoll()) < 0.2 && Math.abs(getYaw()) < 0.2 ) {
+                ap.x.pc = ap.y.pc = ap.z.pc = ap.pitch.pc = ap.yaw.pc = ap.roll.pc = 2
+            }
+        } else if (getX() < 10) {
+            if (ap.x.pc != 5) {console.log("Phase I - Pre-docking Speed Reduction")}
+            ap.x.pc = 5
         }
 
-        if (this.enabled) setTimeout(this.checkApproach, 1000);
+        if (Math.abs(getY()) < 0.2 && Math.abs(getZ()) < 0.2 && Math.abs(getPitch()) < 0.2 && Math.abs(getRoll()) < 0.2 && Math.abs(getYaw()) < 0.2 ) {
+            if (ap.x.tc != -0.5) {console.log("Phase III - Docking")}
+            ap.x.tv = -0.5
+        } else {
+            ap.x.tv = 1
+        }
+        if (ap.enabled) setTimeout(ap.checkApproach, 1000);
 
     }
 
@@ -273,23 +295,11 @@ class Autopilot{
 
         let { roll=true, pitch=true, yaw=true, x=true, y=true, z=true } = params
         if (this.enabled) this.enabled = false;
-        if (roll) this.roll.stop()
-        if (pitch) this.pitch.stop()
-        if (yaw) this.yaw.stop()
-        if (x) this.x.stop()
-        if (y) this.y.stop()
-        if (z) this.z.stop()
     }
 
     enable(params = {}){
         let { roll=true, pitch=true, yaw=true, x=true, y=true, z=true } = params
         this.enabled = true
-        if (roll) this.roll.run()
-        if (pitch) this.pitch.run()
-        if (yaw) this.yaw.run()
-        if (x) this.x.run()
-        if (y) this.y.run()
-        if (z) this.z.run()
         this.checkApproach()
     }
 
@@ -316,32 +326,91 @@ class Autopilot{
 let ap = new Autopilot();;
 
 document.onkeyup = ev=>{
-    switch(ev.keyCode){
-        case 70:
+    switch(ev.key){
+        case "f":
             if(ap.enabled){
+                ap.x.stop()
+                ap.y.stop()
+                ap.z.stop()
+                ap.roll.stop()
+                ap.pitch.stop()
+                ap.yaw.stop()
                 ap.disable()
+                break;
             } else {
                 ap = new Autopilot();
                 ap.enable()
+                ap.x.run()
+                ap.y.run()
+                ap.z.run()
+                ap.roll.run()
+                ap.pitch.run()
+                ap.yaw.run()
+                console.log("Autopilot enabled")
             }
             break;
-        case 89:
-            if (ev.shiftKey)
-                ap.toggle("yaw")
-            else
-                ap.toggle("y")
+        case "y":
+            ap.toggle("y")
+            break;
+        case "Y":
+            ap.toggle("yaw")
             break;
 
-        case 90:
+        case "z":
             ap.toggle("z")
             break;
-        case 88:
+        case "x":
             ap.toggle("x")
+            if (ap.x.enabled) {
+                ap.disable()
+            } else {
+                ap.enable()
+            }
             break;
-        case 80:
+        case "p":
             ap.toggle("pitch")
             break;
-        case 82:
+        case "r":
+            ap.toggle("roll")
+            break;    
+        case "F":
+            if(ap.enabled){
+                ap.x.stop()
+                ap.y.stop()
+                ap.z.stop()
+                ap.roll.stop()
+                ap.pitch.stop()
+                ap.yaw.stop()
+                ap.disable()
+                break;
+            } else {
+                ap = new Autopilot();
+                ap.enable()
+                ap.x.run()
+                ap.y.run()
+                ap.z.run()
+                ap.roll.run()
+                ap.pitch.run()
+                ap.yaw.run()
+                console.log("Autopilot enabled")
+            }
+            break;
+
+        case "Z":
+            ap.toggle("z")
+            break;
+        case "X":
+            ap.toggle("x")
+            if (ap.x.enabled) {
+                ap.disable()
+            } else {
+                ap.enable()
+            }
+            break;
+        case "P":
+            ap.toggle("pitch")
+            break;
+        case "R":
             ap.toggle("roll")
             break;
     }

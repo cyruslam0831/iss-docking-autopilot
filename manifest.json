@@ -1,6 +1,7 @@
 {
-    "name": "SpaceX ISS Docking Simulator Flight Assistant",
-    "version": "1.2",
+    "name": "SpaceX ISS Docking Simulator Flight Assistant (Logitech Controller Version Compatible)",
+    "version": "1.2.0.1",
+    "version_name": "1.2a (Logitech Controller Version Compatible)",
     "manifest_version" : 2,
     "description": "Dock in fully automatic or semi-automatic mode",
     "icons": {
@@ -28,7 +29,7 @@
     "content_scripts": [
         {
             "run_at" :"document_end",
-            "matches": ["http://iss-sim.spacex.com/*", "https://iss-sim.spacex.com/*" ],
+            "matches": ["https://spacex-docking-sim.netlify.app/*", "https://en-us--spacex-docking-sim.netlify.app/"],
             "js": ["script.js"]
         }
     ]
